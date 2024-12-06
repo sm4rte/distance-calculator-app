@@ -1,0 +1,19 @@
+spring:
+  application:
+    distance-calculator-app
+  jpa:
+    database: postgresql
+    hibernate:
+      ddl-auto: update
+    generate-ddl: true
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/dc
+    username: postgres
+    password: 12345
+
+server:
+  port: 8090
