@@ -8,12 +8,27 @@ spring:
     generate-ddl: true
     show-sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-
+#  mvc:
+#    media-types:
+#      json: application/json
+#      default-media-type: json
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/dc
-    username: postgres
-    password: 12345
-
+    username: dc
+    password: dc
+  graphql:
+    cors:
+      allowed-methods: "*"
+      allowed-headers: "*"
+      allowed-origins: "*"
 server:
   port: 8090
+
+
+
+#logging:
+#  level:
+#    org:
+#      springframework:
+#        web: DEBUG

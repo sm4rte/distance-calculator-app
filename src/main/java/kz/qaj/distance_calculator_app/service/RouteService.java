@@ -1,5 +1,10 @@
 package kz.qaj.distance_calculator_app.service;
 
+import kz.qaj.distance_calculator_app.exception.CityNotFoundException;
+import kz.qaj.distance_calculator_app.exception.CityAlreadyExistsException;
+import kz.qaj.distance_calculator_app.exception.MyServerErrorCode;
+import kz.qaj.distance_calculator_app.exception.RouteExistsException;
+import kz.qaj.distance_calculator_app.exception.RouteNotFoundException;
 import kz.qaj.distance_calculator_app.model.City;
 import kz.qaj.distance_calculator_app.model.Route;
 import kz.qaj.distance_calculator_app.model.dto.CityDto;
@@ -36,9 +41,9 @@ public class RouteService {
     public BigDecimal calculateShortestPath(String startCityName, String endCityName) {
         // Fetch start and end cities
         City startCity = cityRepository.findByName(startCityName)
-                .orElseThrow(() -> new IllegalArgumentException("City not found: " + startCityName));
+                .orElseThrow(() -> new CityNotFoundException(MyServerErrorCode.CITY_NOT_FOUND));//("City not found: " + startCityName));
         City endCity = cityRepository.findByName(endCityName)
-                .orElseThrow(() -> new IllegalArgumentException("City not found: " + endCityName));
+                .orElseThrow(() -> new CityNotFoundException(MyServerErrorCode.CITY_NOT_FOUND));
 
         // Initialize variables
         Map<City, BigDecimal> distances = new HashMap<>();
@@ -109,6 +114,9 @@ public class RouteService {
     }
 
     public City saveCity(CityDto cityDto) {
+        if (cityRepository.findByName(cityDto.getName()).isPresent()) {
+            throw new CityAlreadyExistsException(MyServerErrorCode.CITY_EXISTS);
+        }
         City newCity = new City();
         newCity.setName(cityDto.getName());
         return cityRepository.save(newCity);
@@ -118,6 +126,18 @@ public class RouteService {
         if (Objects.equals(routeDto.getSource(), routeDto.getTarget())) {
             throw new BadRequestException("Dumb Request");
         }
+
+        Optional<City> optionalTargetCity = cityRepository.findById(routeDto.getTarget());
+        Optional<City> optionalSourceCity = cityRepository.findById(routeDto.getSource());
+
+        if (optionalSourceCity.isEmpty() || optionalTargetCity.isEmpty()) {
+            throw new CityNotFoundException(MyServerErrorCode.CITY_NOT_FOUND);
+        }
+
+        if (routeRepository.findBySourceAndTargetAndIsDetour(optionalSourceCity.get(), optionalTargetCity.get(), routeDto.getIsDetour()).isPresent()) {
+            throw new RouteExistsException(MyServerErrorCode.SAME_ROUTE_EXISTS);
+        }
+
         Route newRoute = new Route();
         newRoute.setSource(new City(routeDto.getSource()));
         newRoute.setTarget(new City(routeDto.getTarget()));
@@ -134,13 +154,21 @@ public class RouteService {
                 throw new BadRequestException("Dumb request: sending same name!");
             city.setName(cityDto.getName());
             return cityRepository.save(city);
-        } else throw new BadRequestException("City not found to update");
+        } else throw new CityNotFoundException(MyServerErrorCode.CITY_NOT_FOUND);
     }
 
     public Route updateRouteById(Long id, RouteUpdateDto routeUpdateDto) throws BadRequestException {
         if (Objects.equals(routeUpdateDto.getSource(), routeUpdateDto.getTarget())) {
             throw new BadRequestException("Dumb Request");
         }
+
+        Optional<City> optionalTargetCity = cityRepository.findById(routeUpdateDto.getTarget());
+        Optional<City> optionalSourceCity = cityRepository.findById(routeUpdateDto.getSource());
+
+        if (optionalSourceCity.isEmpty() || optionalTargetCity.isEmpty()) {
+            throw new CityNotFoundException(MyServerErrorCode.CITY_NOT_FOUND);
+        }
+
         Optional<Route> optionalRoute = routeRepository.findById(id);
         if (optionalRoute.isPresent()) {
             Route route = optionalRoute.get();
@@ -151,18 +179,28 @@ public class RouteService {
             route.setIsDetour(routeUpdateDto.getIsDetour());
             route.setModifiedDate(LocalDateTime.now());
             return routeRepository.save(route);
-        } else throw new BadRequestException("Route not found to update");
+        } else throw new RouteNotFoundException(MyServerErrorCode.ROUTE_NOT_FOUND);
     }
 
     public void deleteCityById(Long cityId) {
-        if (cityRepository.findById(cityId).isPresent()) {
+        Optional<City> optionalCity = cityRepository.findById(cityId);
+
+        if (optionalCity.isPresent()) {
+
+            if (!routeRepository.findAllBySourceOrTarget(optionalCity.get(), optionalCity.get()).isEmpty()) {
+                throw new RouteExistsException(MyServerErrorCode.ROUTE_EXISTS);
+            }
             cityRepository.deleteById(cityId);
+        } else {
+            throw new CityNotFoundException(MyServerErrorCode.CITY_NOT_FOUND);
         }
     }
 
     public void deleteRouteById(Long routeId) {
         if (routeRepository.findById(routeId).isPresent()) {
             routeRepository.deleteById(routeId);
+        } else {
+            throw new RouteNotFoundException(MyServerErrorCode.ROUTE_NOT_FOUND);
         }
     }
 }

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +31,7 @@ import java.util.Map;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class CalculatorController {
 
     private final RouteService routeService;
@@ -97,6 +99,8 @@ public class CalculatorController {
     @Operation(summary = "API для удаление Города по ID")
     public ResponseEntity<?> deleteCityById(@PathVariable Long id) {
         log.info("cityId to delete:{}", id);
+
+
         routeService.deleteCityById(id);
         return ResponseEntity.ok("city with Id deleted successfully!");
     }

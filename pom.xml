@@ -12,7 +12,7 @@
 	<artifactId>distance-calculator-app</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>distance-calculator-app</name>
-	<description>Spring project for calculationg distance </description>
+	<description>Spring project for calculating distance </description>
 	<url/>
 	<licenses>
 		<license/>
