@@ -39,7 +39,6 @@ public class RouteService {
     }
 
     public BigDecimal calculateShortestPath(String startCityName, String endCityName) {
-        // Fetch start and end cities
         City startCity = cityRepository.findByName(startCityName)
                 .orElseThrow(() -> new CityNotFoundException(MyServerErrorCode.CITY_NOT_FOUND));//("City not found: " + startCityName));
         City endCity = cityRepository.findByName(endCityName)
